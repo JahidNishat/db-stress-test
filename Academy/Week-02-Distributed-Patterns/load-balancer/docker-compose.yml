@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  lb:
+    build: ./lb
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKENDS=http://backend1:8081,http://backend2:8082,http://backend3:8083
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+
+  backend1:
+    build: ./backend
+    command: ["-port", "8081"]
+
+  backend2:
+    build: ./backend
+    command: ["-port", "8082"]
+
+  backend3:
+    build: ./backend
+    command: ["-port", "8083"]

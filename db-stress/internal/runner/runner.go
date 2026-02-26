@@ -9,11 +9,6 @@ import (
 	"time"
 )
 
-var (
-	successCount int64
-	failCount    int64
-)
-
 type Stats struct {
 	Duration time.Duration
 	IsError  bool
@@ -36,8 +31,6 @@ func Run(cfg Config, wl workload.Workload, statsCh chan<- Stats) error {
 			return fmt.Errorf("db connection failed: %w", err)
 		}
 		defer db.Close()
-	} else {
-		// fmt.Println("⚠️ NO DSN provided. Running in simulation mode")
 	}
 
 	if err := wl.Setup(db); err != nil {

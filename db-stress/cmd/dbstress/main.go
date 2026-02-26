@@ -41,7 +41,7 @@ var rootCmd = &cobra.Command{
 		statsCh := make(chan runner.Stats, 10000)
 
 		go func() {
-			runner.Run(cfg, wl, statsCh)
+			_ = runner.Run(cfg, wl, statsCh)
 		}()
 
 		p := tea.NewProgram(ui.InitialModel(statsCh))

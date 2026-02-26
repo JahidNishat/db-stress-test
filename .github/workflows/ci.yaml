@@ -47,7 +47,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
-          # working-directory: ./db-stress
+          working-directory: ./db-stress
 
       - name: Build All Docker Images
         run: |

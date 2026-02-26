@@ -7,9 +7,25 @@ on:
   pull_request:
     branches:
       - "main"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: dummy_db
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Check out code
@@ -19,21 +35,49 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.24"
+      
+      - name: Create k8s cluster (KinD)
+        uses: helm/kind-action@v1.10.0
 
       - name: Golangci Lint
         uses: golangci/golangci-lint-action@v6
         with:
           working-directory: ./db-stress
 
-      - name: Build db-stress
-        working-directory: ./db-stress
-        run: go build -v ./...
+      - name: Build All Docker Images
+        run: |
+          docker build -t backend:latest ./Academy/Week-02-Distributed-Patterns/load-balancer/backend
+          docker build -t lb:latest ./Academy/Week-02-Distributed-Patterns/load-balancer/lb
+          docker build -t db-stress:latest ./db-stress
 
-      - name: Test db-stress
-        working-directory: ./db-stress
+      - name: Load Images into KinD
+        run: |
+          kind load docker-image backend:latest
+          kind load docker-image lb:latest
+
+      - name: Deploy to K8s
+        run: |
+          kubectl create namespace dev
+          kubectl apply -k Academy/Week-18-Kubernetes/k8s/overlays/dev
+
+      - name: Wait for Pods
+        run: |
+          kubectl wait --for=condition=ready pod -l app=backend -n dev --timeout=90s
+          kubectl wait --for=condition=ready pod -l app=lb -n dev --timeout=90s
+
+      - name: Port Forward
+        run: |
+          kubectl port-forward svc/lb-public 8000:8000 -n dev &
+          sleep 10 # Wait for tunnel to establish
+
+      - name: Run LoadBalancer Unit Tests
+        working-directory: ./Academy/Week-02-Distributed-Patterns/load-balancer/lb
         run: go test -v ./...
 
-      - name: Build Docker Image
-        run: |
-          cd db-stress
-          docker build -t db-stress:${{ github.sha }} .
+      - name: Run E2E Integration Tests
+        working-directory: ./Academy/Week-18-Kubernetes
+        run: go test -v .
+
+      - name: Run db-stress Tests
+        working-directory: ./db-stress
+        run: go test -v ./...

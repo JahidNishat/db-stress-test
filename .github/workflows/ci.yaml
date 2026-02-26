@@ -93,7 +93,7 @@ jobs:
 
       - name: Run E2E Integration Tests
         working-directory: ./Academy/Week-18-Kubernetes
-        run: go test -v .
+        run: go test -v e2e_test.go
 
       - name: Run db-stress Tests
         working-directory: ./db-stress

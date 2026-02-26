@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -19,7 +20,8 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request from %s\n", r.RemoteAddr)
 		log.Printf("User-ID: %v\n", r.URL.Query().Get("user_id"))
-		w.Write([]byte(fmt.Sprintf("Hello from backend server on port %d\n", *port)))
+		hostName, _ := os.Hostname()
+		fmt.Fprintf(w, "[%s] Hello from backend server on port %d\n", hostName, *port)
 	})
 
 	log.Printf("Starting backend server on port %d\n", *port)

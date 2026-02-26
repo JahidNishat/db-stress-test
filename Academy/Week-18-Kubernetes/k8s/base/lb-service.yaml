@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-public
+spec:
+  type: LoadBalancer
+  selector:
+    app: lb
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

@@ -1,0 +1,5 @@
+resources:
+  - backend.yaml
+  - backend-service.yaml
+  - lb.yaml
+  - lb-service.yaml
